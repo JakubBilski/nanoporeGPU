@@ -7,6 +7,12 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#include <cuda_runtime.h>
+
+#include "defines.cuh"
+#include "utils.cuh"
+#include "graphCreationK.cuh"
+
 const char* map_file(const char* fname, size_t& length);
 
 int main(int argc, char* argv[])
@@ -19,13 +25,27 @@ int main(int argc, char* argv[])
     size_t length;
     auto f = map_file(argv[1], length);
     auto l = f + length;
-
-    uintmax_t m_numLines = 0;
+    char* d_file;
+    int* d_out_numLines;
+    int cudaNumLines=0;
+    gpuErrchk(cudaMalloc(&d_file, length*sizeof(char)));
+    gpuErrchk(cudaMemcpy(d_file, f, length*sizeof(char), cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMalloc(&d_out_numLines, sizeof(int)));
+    gpuErrchk(cudaMemset(&d_out_numLines, sizeof(int), 0));
+    AddFileToGraph<<<1, BLOCK_SIZE>>>(d_file, length, d_out_numLines);
+    cudaError_t err = cudaGetLastError();
+    if (err != cudaSuccess)
+        printf("Error: %s\n", cudaGetErrorString(err));
+    gpuErrchk(cudaMemcpy(&cudaNumLines, d_out_numLines, sizeof(int), cudaMemcpyDeviceToHost));
+    gpuErrchk(cudaFree(d_file));
+    gpuErrchk(cudaFree(d_out_numLines));
+    uintmax_t cpuNumLines = 0;
     while (f && f!=l)
         if ((f = static_cast<const char*>(memchr(f, '\n', l-f))))
-            m_numLines++, f++;
+            cpuNumLines++, f++;
 
-    std::cout << "m_numLines = " << m_numLines << "\n";
+    std::cout << "cpuNumLines = " << cpuNumLines << "\n";
+    std::cout << "cudaNumLines = " << cudaNumLines << "\n";
 }
 
 void handle_error(const char* msg) {

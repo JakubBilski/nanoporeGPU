@@ -51,7 +51,7 @@ endif
 
 
 # Add inputs and outputs from these tool invocations to the build variables 
-OBJS := reader.cu
+OBJS := src/reader.cu
 # All Target
 all: reader
 
@@ -59,7 +59,7 @@ all: reader
 reader: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: NVCC Linker'
-	nvcc --cudart static --relocatable-device-code=false -gencode arch=compute_61,code=compute_61 -gencode arch=compute_61,code=sm_61 -link -o  "reader" $(OBJS) $(USER_OBJS) $(LIBS)
+	nvcc --cudart static --relocatable-device-code=false -gencode arch=compute_35,code=compute_35 -gencode arch=compute_35,code=sm_35 -link -o  "reader" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
