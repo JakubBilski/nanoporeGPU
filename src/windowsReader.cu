@@ -9,11 +9,10 @@
 #include "defines.cuh"
 #include "utils.cuh"
 #include "graphCreationK.cuh"
-#include "windowsReader.h"
 
 void simpleGPU(std::ifstream& fs);
 void stringCPU(std::ifstream& fs);
-void precleanedGPU(std::ifstream& fs);
+void precleanedStreamGPU(std::ifstream& fs);
 void simpleCPU(std::ifstream& fs);
 
 int main(int argc, char* argv[])
@@ -32,8 +31,8 @@ int main(int argc, char* argv[])
 	fs.close();
 
 	fs.open(argv[1], std::ios::in | std::ios::binary);
-	precleanedGPU(fs);
-	printf("precleanedGPU done!\n");
+	precleanedStreamGPU(fs);
+	printf("precleanedStreamGPU done!\n");
 	fs.close();
 
 	fs.open(argv[1], std::ios::in | std::ios::binary);
@@ -96,7 +95,7 @@ void stringCPU(std::ifstream& fs)
 	}
 }
 
-void precleanedGPU(std::ifstream& fs)
+void precleanedStreamGPU(std::ifstream& fs)
 {
 	char* d_chunk;
 	int* d_out_numAs;
@@ -123,10 +122,7 @@ void precleanedGPU(std::ifstream& fs)
 			kernelErrchk();
 			int savedLen = fs.gcount() - 1;
 			fs.clear();
-			for (int i = 0; i < savedLen; i++)	//copying unused tail to the beginning
-			{
-				clearedChunk[i] = clearedChunk[clearedChunkSize + i];
-			}
+			memcpy(clearedChunk, clearedChunk + clearedChunkSize, sizeof(char)*savedLen);
 			clearedChunkSize = savedLen;
 			fs.getline(&(clearedChunk[clearedChunkSize]), INPUT_CHUNK_SIZE);	
 			if (fs.fail())
@@ -188,10 +184,7 @@ void simpleCPU(std::ifstream& fs)
 				i++;
 				if (i == INPUT_CHUNK_SIZE)
 				{
-					for (int j = 0; j < INPUT_CHUNK_SIZE - startOfLetters; j++)
-					{
-						chunk[j] = chunk[startOfLetters + j];
-					}
+					memcpy(chunk, chunk + startOfLetters, sizeof(char)*(INPUT_CHUNK_SIZE - startOfLetters));
 					chunkOffset = INPUT_CHUNK_SIZE - startOfLetters;
 					cutPhase = 4;
 					endOfChunk = true;
