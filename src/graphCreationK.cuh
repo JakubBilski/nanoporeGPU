@@ -17,13 +17,13 @@ void AddChunkToGraph(char* file, int length, int* out_numLines)	//TODO
 __global__
 void AddPrecleanedChunkToGraph(char* file, int length, int* out_numLines)
 {
-	int thid = threadIdx.x;
+	int thid = threadIdx.x + blockIdx.x * blockDim.x;
 	while (thid < length)
 	{
 		if (file[thid] == 'A')
 		{
 			atomicAdd(out_numLines, 1);
 		}
-		thid += BLOCK_SIZE;
+		thid += BLOCK_SIZE * NO_BLOCKS;
 	}
 }

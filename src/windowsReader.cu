@@ -3,6 +3,7 @@
 #include <fstream>
 #include <string>
 #include <exception>
+#include <time.h>
 
 #include <cuda_runtime.h>
 
@@ -26,18 +27,21 @@ int main(int argc, char* argv[])
 	printf("Starting\n");
 
 	std::ifstream fs(argv[1], std::ios::in | std::ios::binary);
+	clock_t start = clock();
 	stringCPU(fs);
-	printf("stringCPU done!\n");
+	printf("stringCPU done in %f seconds\n", 0.001f * (clock() - start)*1000 / CLOCKS_PER_SEC);
 	fs.close();
 
 	fs.open(argv[1], std::ios::in | std::ios::binary);
+	start = clock();
 	precleanedStreamGPU(fs);
-	printf("precleanedStreamGPU done!\n");
+	printf("precleanedStreamGPU done in %f seconds\n", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
 	fs.close();
 
 	fs.open(argv[1], std::ios::in | std::ios::binary);
+	start = clock();
 	simpleCPU(fs);
-	printf("simpleCPU done!\n");
+	printf("simpleCPU done in %f seconds\n", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
 	fs.close();
 
 	return 0;
@@ -118,7 +122,7 @@ void precleanedStreamGPU(std::ifstream& fs)
 			}
 			//printf("Kernel launch\n");
 			gpuErrchk(cudaMemcpy(d_chunk, clearedChunk, clearedChunkSize * sizeof(char), cudaMemcpyHostToDevice));
-			AddPrecleanedChunkToGraph << <1, BLOCK_SIZE >> > (d_chunk, clearedChunkSize, d_out_numAs);
+			AddPrecleanedChunkToGraph << <NO_BLOCKS, BLOCK_SIZE >> > (d_chunk, clearedChunkSize, d_out_numAs);
 			kernelErrchk();
 			int savedLen = fs.gcount() - 1;
 			fs.clear();
@@ -141,7 +145,7 @@ void precleanedStreamGPU(std::ifstream& fs)
 	}
 	//printf("Kernel launch\n");
 	gpuErrchk(cudaMemcpy(d_chunk, clearedChunk, clearedChunkSize * sizeof(char), cudaMemcpyHostToDevice));
-	AddPrecleanedChunkToGraph << <1, BLOCK_SIZE >> > (d_chunk, clearedChunkSize, d_out_numAs);
+	AddPrecleanedChunkToGraph << <NO_BLOCKS, BLOCK_SIZE >> > (d_chunk, clearedChunkSize, d_out_numAs);
 	kernelErrchk();
 	gpuErrchk(cudaMemcpy(&noAs, d_out_numAs, sizeof(int), cudaMemcpyDeviceToHost));
 	gpuErrchk(cudaFree(d_chunk));
@@ -157,13 +161,12 @@ void simpleCPU(std::ifstream& fs)
 {
 	int noAs = 0;
 	char* chunk = (char*)malloc(sizeof(char)*INPUT_CHUNK_SIZE);
-	int cutPhase = 3;
-	int chunkOffset = 0;
+	int cutPhase = 2;
 	while (!fs.eof())
 	{
-		fs.read(chunk + chunkOffset, INPUT_CHUNK_SIZE - chunkOffset);
+		fs.read(chunk, INPUT_CHUNK_SIZE);
 		int i = 0;
-		for (int j=0; j < 4-cutPhase; j++)
+		for (int j=0; j < 3-cutPhase; j++)
 		{
 			while (chunk[i] != '\n')
 			{
@@ -184,9 +187,12 @@ void simpleCPU(std::ifstream& fs)
 				i++;
 				if (i == INPUT_CHUNK_SIZE)
 				{
-					memcpy(chunk, chunk + startOfLetters, sizeof(char)*(INPUT_CHUNK_SIZE - startOfLetters));
-					chunkOffset = INPUT_CHUNK_SIZE - startOfLetters;
-					cutPhase = 4;
+					//w jakis sposob musimy tu zapamietac to, co bedzie potrzebne do dalszego liczenia w kolejnym kawalku
+					//moze to zapewne zajac troche czasu
+					//ponizsze zakomentowane jest bledne
+					//memcpy(chunk, chunk + startOfLetters, sizeof(char)*(INPUT_CHUNK_SIZE - startOfLetters));
+					//chunkOffset = INPUT_CHUNK_SIZE - startOfLetters;
+					cutPhase = 3;
 					endOfChunk = true;
 					break;
 				}
@@ -194,7 +200,7 @@ void simpleCPU(std::ifstream& fs)
 			i++;
 			if (!endOfChunk)
 			{
-				for (int j = 0; j < 3; j++)
+				for (int j = 0; j < 3 && !endOfChunk; j++)
 				{
 					while (chunk[i] != '\n')
 					{
@@ -202,6 +208,8 @@ void simpleCPU(std::ifstream& fs)
 						if (i == INPUT_CHUNK_SIZE)
 						{
 							cutPhase = j;
+							endOfChunk = true;
+							break;
 						}
 					}
 					i++;
@@ -209,6 +217,7 @@ void simpleCPU(std::ifstream& fs)
 			}
 		}
 	}
+	free(chunk);
 	if (noAs != DEBUG_A_COUNT)
 	{
 		throw std::runtime_error("invalid value calculated by tested function");
