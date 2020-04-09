@@ -11,9 +11,9 @@
 #include "utils.cuh"
 #include "graphCreationK.cuh"
 
-void simpleGPU(std::ifstream& fs);
+template <int TNoBlocks> void simpleGPU(std::ifstream& fs);
 void stringCPU(std::ifstream& fs);
-void precleanedStreamGPU(std::ifstream& fs);
+template <int TNoBlocks> void precleanedStreamGPU(std::ifstream& fs);
 void simpleCPU(std::ifstream& fs);
 
 int main(int argc, char* argv[])
@@ -34,8 +34,26 @@ int main(int argc, char* argv[])
 
 	fs.open(argv[1], std::ios::in | std::ios::binary);
 	start = clock();
-	precleanedStreamGPU(fs);
-	printf("precleanedStreamGPU done in %f seconds\n", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
+	precleanedStreamGPU<1>(fs);
+	printf("precleanedStreamGPU<1> done in %f seconds\n", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
+	fs.close();
+
+	fs.open(argv[1], std::ios::in | std::ios::binary);
+	start = clock();
+	precleanedStreamGPU<5>(fs);
+	printf("precleanedStreamGPU<5> done in %f seconds\n", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
+	fs.close();
+
+	fs.open(argv[1], std::ios::in | std::ios::binary);
+	start = clock();
+	precleanedStreamGPU<10>(fs);
+	printf("precleanedStreamGPU<10> done in %f seconds\n", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
+	fs.close();
+
+	fs.open(argv[1], std::ios::in | std::ios::binary);
+	start = clock();
+	precleanedStreamGPU<20>(fs);
+	printf("precleanedStreamGPU<20> done in %f seconds\n", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
 	fs.close();
 
 	fs.open(argv[1], std::ios::in | std::ios::binary);
@@ -47,6 +65,7 @@ int main(int argc, char* argv[])
 	return 0;
 }
 
+template <int TNoBlocks>
 void simpleGPU(std::ifstream& fs)
 {
 	char* d_chunk;
@@ -62,7 +81,7 @@ void simpleGPU(std::ifstream& fs)
 		fs.read(chunk, INPUT_CHUNK_SIZE);
 		chunkSize = fs.gcount();
 		gpuErrchk(cudaMemcpy(d_chunk, chunk, chunkSize * sizeof(char), cudaMemcpyHostToDevice));
-		AddChunkToGraph << <1, BLOCK_SIZE >> > (d_chunk, chunkSize, d_out_numAs);
+		AddChunkToGraph << <TNoBlocks, BLOCK_SIZE >> > (TNoBlocks, d_chunk, chunkSize, d_out_numAs);
 		kernelErrchk();
 	} while (chunkSize == INPUT_CHUNK_SIZE);
 	gpuErrchk(cudaMemcpy(&noAs, d_out_numAs, sizeof(int), cudaMemcpyDeviceToHost));
@@ -99,6 +118,7 @@ void stringCPU(std::ifstream& fs)
 	}
 }
 
+template <int TNoBlocks>
 void precleanedStreamGPU(std::ifstream& fs)
 {
 	char* d_chunk;
@@ -122,7 +142,7 @@ void precleanedStreamGPU(std::ifstream& fs)
 			}
 			//printf("Kernel launch\n");
 			gpuErrchk(cudaMemcpy(d_chunk, clearedChunk, clearedChunkSize * sizeof(char), cudaMemcpyHostToDevice));
-			AddPrecleanedChunkToGraph << <NO_BLOCKS, BLOCK_SIZE >> > (d_chunk, clearedChunkSize, d_out_numAs);
+			AddPrecleanedChunkToGraph << <TNoBlocks, BLOCK_SIZE >> > (TNoBlocks, d_chunk, clearedChunkSize, d_out_numAs);
 			kernelErrchk();
 			int savedLen = fs.gcount() - 1;
 			fs.clear();
@@ -145,7 +165,7 @@ void precleanedStreamGPU(std::ifstream& fs)
 	}
 	//printf("Kernel launch\n");
 	gpuErrchk(cudaMemcpy(d_chunk, clearedChunk, clearedChunkSize * sizeof(char), cudaMemcpyHostToDevice));
-	AddPrecleanedChunkToGraph << <NO_BLOCKS, BLOCK_SIZE >> > (d_chunk, clearedChunkSize, d_out_numAs);
+	AddPrecleanedChunkToGraph << <TNoBlocks, BLOCK_SIZE >> > (TNoBlocks, d_chunk, clearedChunkSize, d_out_numAs);
 	kernelErrchk();
 	gpuErrchk(cudaMemcpy(&noAs, d_out_numAs, sizeof(int), cudaMemcpyDeviceToHost));
 	gpuErrchk(cudaFree(d_chunk));

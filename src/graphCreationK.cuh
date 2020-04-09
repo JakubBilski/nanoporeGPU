@@ -1,7 +1,7 @@
 #include <cuda_runtime.h>
 
 __global__
-void AddChunkToGraph(char* file, int length, int* out_numLines)	//TODO
+void AddChunkToGraph(int noBlocks, char* file, int length, int* out_numLines)	//TODO
 {
   int thid = threadIdx.x;
   while(thid < length)
@@ -15,7 +15,7 @@ void AddChunkToGraph(char* file, int length, int* out_numLines)	//TODO
 }
 
 __global__
-void AddPrecleanedChunkToGraph(char* file, int length, int* out_numLines)
+void AddPrecleanedChunkToGraph(int noBlocks, char* file, int length, int* out_numLines)
 {
 	int thid = threadIdx.x + blockIdx.x * blockDim.x;
 	while (thid < length)
@@ -24,6 +24,6 @@ void AddPrecleanedChunkToGraph(char* file, int length, int* out_numLines)
 		{
 			atomicAdd(out_numLines, 1);
 		}
-		thid += BLOCK_SIZE * NO_BLOCKS;
+		thid += BLOCK_SIZE * noBlocks;
 	}
 }
