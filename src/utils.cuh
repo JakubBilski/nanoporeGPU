@@ -18,3 +18,14 @@ inline void kernelAssert(const char *file, int line, bool abort = true)
 		if (abort) exit(code);
 	}
 }
+
+inline void assertOpenFile(const std::ifstream & fs, char* fileName)
+{
+	if (!fs.is_open())
+	{
+		printf("Unable to open ");
+		printf(fileName);
+		printf("\nClosing\n");
+		exit(0);
+	}
+}

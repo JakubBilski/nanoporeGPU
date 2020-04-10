@@ -15,9 +15,9 @@ void AddChunkToGraph(int noBlocks, char* file, int length, int* out_numLines)	//
 }
 
 __global__
-void AddPrecleanedChunkToGraph(int noBlocks, char* file, int length, int* out_numLines)
+void AddPrecleanedChunkToGraph(int noBlocks, char* file, int length, unsigned long long int* out_numLines)
 {
-	int thid = threadIdx.x + blockIdx.x * blockDim.x;
+	int thid = threadIdx.x + blockIdx.x * BLOCK_SIZE;
 	while (thid < length)
 	{
 		if (file[thid] == 'A')

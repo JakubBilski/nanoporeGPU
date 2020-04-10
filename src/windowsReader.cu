@@ -30,41 +30,71 @@ int main(int argc, char* argv[])
 	const int noTests = 2;
 	for (size_t test = 0; test < noTests; test++)
 	{
-		std::ifstream fs(argv[1], std::ios::in | std::ios::binary);
-		clock_t start = clock();
-		precleanedStreamGPU<1>(fs);
-		printf("precleanedStreamGPU<1> done in %f seconds\n", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
-		fs.close();
+		printf(argv[1]);
+		printf(", run %d\n", (int)test);
 
-		fs.open(argv[1], std::ios::in | std::ios::binary);
-		start = clock();
+		std::ifstream fs(argv[1], std::ios::in | std::ios::binary);
+		assertOpenFile(fs, argv[1]);
+		clock_t start = clock();
 		precleanedGPU<1>(fs);
 		printf("precleanedGPU<1> done in %f seconds\n", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
 		fs.close();
 
 		fs.open(argv[1], std::ios::in | std::ios::binary);
+		assertOpenFile(fs, argv[1]);
+		start = clock();
+		precleanedGPU<5>(fs);
+		printf("precleanedGPU<5> done in %f seconds\n", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
+		fs.close();
+
+		fs.open(argv[1], std::ios::in | std::ios::binary);
+		assertOpenFile(fs, argv[1]);
+		start = clock();
+		precleanedGPU<10>(fs);
+		printf("precleanedGPU<10> done in %f seconds\n", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
+		fs.close();
+
+		fs.open(argv[1], std::ios::in | std::ios::binary);
+		assertOpenFile(fs, argv[1]);
+		start = clock();
+		precleanedGPU<20>(fs);
+		printf("precleanedGPU<20> done in %f seconds\n", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
+		fs.close();
+
+		fs.open(argv[1], std::ios::in | std::ios::binary);
+		start = clock();
+		precleanedStreamGPU<1>(fs);
+		printf("precleanedStreamGPU<1> done in %f seconds\n", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
+		fs.close();
+
+		fs.open(argv[1], std::ios::in | std::ios::binary);
+		assertOpenFile(fs, argv[1]);
 		start = clock();
 		precleanedStreamGPU<5>(fs);
 		printf("precleanedStreamGPU<5> done in %f seconds\n", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
 		fs.close();
 
 		fs.open(argv[1], std::ios::in | std::ios::binary);
+		assertOpenFile(fs, argv[1]);
 		start = clock();
 		precleanedStreamGPU<10>(fs);
 		printf("precleanedStreamGPU<10> done in %f seconds\n", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
 		fs.close();
 
 		fs.open(argv[1], std::ios::in | std::ios::binary);
+		assertOpenFile(fs, argv[1]);
 		start = clock();
 		precleanedStreamGPU<20>(fs);
 		printf("precleanedStreamGPU<20> done in %f seconds\n", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
 		fs.close();
 
 		fs.open(argv[1], std::ios::in | std::ios::binary);
+		assertOpenFile(fs, argv[1]);
 		start = clock();
 		simpleCPU(fs);
 		printf("simpleCPU done in %f seconds\n", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
 		fs.close();
+
 		printf("\n");
 	}
 	return 0;
@@ -79,7 +109,7 @@ void simpleGPU(std::ifstream& fs)
 	char* chunk = (char*)malloc(sizeof(char)*INPUT_CHUNK_SIZE);
 	gpuErrchk(cudaMalloc(&d_chunk, INPUT_CHUNK_SIZE * sizeof(char)));
 	gpuErrchk(cudaMalloc(&d_out_numAs, sizeof(int)));
-	gpuErrchk(cudaMemset(&d_out_numAs, sizeof(int), 0));
+	gpuErrchk(cudaMemset(d_out_numAs, 0, sizeof(int)));
 	int chunkSize = 0;
 	do
 	{
@@ -127,13 +157,13 @@ template <int TNoBlocks>
 void precleanedStreamGPU(std::ifstream& fs)
 {
 	char* d_chunk;
-	int* d_out_numAs;
+	unsigned long long int* d_out_numAs;
 	char* clearedChunk = (char*)malloc(sizeof(char)*INPUT_CHUNK_SIZE);
 	int clearedChunkSize = 0;
-	int noAs = 0;
+	unsigned long long int noAs = 0;
 	gpuErrchk(cudaMalloc(&d_chunk, INPUT_CHUNK_SIZE * sizeof(char)));
-	gpuErrchk(cudaMalloc(&d_out_numAs, sizeof(int)));
-	gpuErrchk(cudaMemset(&d_out_numAs, sizeof(int), 0));
+	gpuErrchk(cudaMalloc(&d_out_numAs, sizeof(unsigned long long int)));
+	gpuErrchk(cudaMemset(d_out_numAs, 0, sizeof(unsigned long long int)));
 	while(!fs.eof())
 	{
 		fs.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
@@ -168,11 +198,13 @@ void precleanedStreamGPU(std::ifstream& fs)
 		fs.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 		fs.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 	}
+	//printf("ClearedChunkSize: %d/%d\n", clearedChunkSize, INPUT_CHUNK_SIZE);
 	//printf("Kernel launch\n");
 	gpuErrchk(cudaMemcpy(d_chunk, clearedChunk, clearedChunkSize * sizeof(char), cudaMemcpyHostToDevice));
 	AddPrecleanedChunkToGraph << <TNoBlocks, BLOCK_SIZE >> > (TNoBlocks, d_chunk, clearedChunkSize, d_out_numAs);
 	kernelErrchk();
-	gpuErrchk(cudaMemcpy(&noAs, d_out_numAs, sizeof(int), cudaMemcpyDeviceToHost));
+	gpuErrchk(cudaDeviceSynchronize());
+	gpuErrchk(cudaMemcpy(&noAs, d_out_numAs, sizeof(unsigned long long int), cudaMemcpyDeviceToHost));
 	gpuErrchk(cudaFree(d_chunk));
 	gpuErrchk(cudaFree(d_out_numAs));
 	free(clearedChunk);
@@ -186,16 +218,16 @@ template <int TNoBlocks>
 void precleanedGPU(std::ifstream& fs)
 {
 	char* d_chunk;
-	int* d_out_numAs;
+	unsigned long long int* d_out_numAs;
 	char* chunk = (char*)malloc(sizeof(char)*INPUT_CHUNK_SIZE);
 	char* clearedChunk = (char*)malloc(sizeof(char)*INPUT_CHUNK_SIZE);
 	int clearedChunkSize = 0;
 	int chunkOffset = 0;
-	int noAs = 0;
+	unsigned long long int noAs = 0;
 	int cutPhase = 2;
 	gpuErrchk(cudaMalloc(&d_chunk, INPUT_CHUNK_SIZE * sizeof(char)));
-	gpuErrchk(cudaMalloc(&d_out_numAs, sizeof(int)));
-	gpuErrchk(cudaMemset(&d_out_numAs, sizeof(int), 0));
+	gpuErrchk(cudaMalloc(&d_out_numAs, sizeof(unsigned long long int)));
+	gpuErrchk(cudaMemset(d_out_numAs, 0, sizeof(unsigned long long int)));
 	while (!fs.eof())
 	{
 		fs.read(chunk + chunkOffset, INPUT_CHUNK_SIZE - chunkOffset);
@@ -259,7 +291,7 @@ void precleanedGPU(std::ifstream& fs)
 	gpuErrchk(cudaMemcpy(d_chunk, clearedChunk, clearedChunkSize * sizeof(char), cudaMemcpyHostToDevice));
 	AddPrecleanedChunkToGraph << <TNoBlocks, BLOCK_SIZE >> > (TNoBlocks, d_chunk, clearedChunkSize, d_out_numAs);
 	kernelErrchk();
-	gpuErrchk(cudaMemcpy(&noAs, d_out_numAs, sizeof(int), cudaMemcpyDeviceToHost));
+	gpuErrchk(cudaMemcpy(&noAs, d_out_numAs, sizeof(unsigned long long int), cudaMemcpyDeviceToHost));
 	gpuErrchk(cudaFree(d_chunk));
 	gpuErrchk(cudaFree(d_out_numAs));
 	free(chunk);
