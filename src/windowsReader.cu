@@ -27,9 +27,10 @@ int main(int argc, char* argv[])
       return 0;
     }
 
+	printf("Machine: %d MB process memory, %d MB device memory\n", (sizeof(char)*HOST_CHUNK_SIZE)/(1024*1024), (sizeof(char)*DEVICE_CHUNK_SIZE) / (1024 * 1024));
 	printf("Starting\n");
 
-	const int noTests = 2;
+	const int noTests = 1;
 	for (size_t test = 0; test < noTests; test++)
 	{
 		printf(argv[1]);
@@ -38,98 +39,105 @@ int main(int argc, char* argv[])
 		std::ifstream fs(argv[1], std::ios::in | std::ios::binary);
 		assertOpenFile(fs, argv[1]);
 		clock_t start = clock();
-		simpleCPU(fs);
-		printf("precleanedGPU<1> done in %f seconds\n", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
-		fs.close();
-
-		fs.open(argv[1], std::ios::in | std::ios::binary);
-		assertOpenFile(fs, argv[1]);
-		start = clock();
-		simpleCPU(fs);
-		printf("simpleCPU done in %f seconds\n", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
-		fs.close();
-
-		fs.open(argv[1], std::ios::in | std::ios::binary);
-		assertOpenFile(fs, argv[1]);
-		start = clock();
-		jumpCPU(fs);
-		printf("jumpCPU done in %f seconds\n", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
+		precleanedGPU<1>(fs);
+		printf("%25s = %11f\n", "precleanedGPU<1>", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
 		fs.close();
 
 		fs.open(argv[1], std::ios::in | std::ios::binary);
 		assertOpenFile(fs, argv[1]);
 		start = clock();
 		precleanedGPU<5>(fs);
-		printf("precleanedGPU<5> done in %f seconds\n", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
+		printf("%25s = %11f\n", "precleanedGPU<5>", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
 		fs.close();
 
 		fs.open(argv[1], std::ios::in | std::ios::binary);
 		assertOpenFile(fs, argv[1]);
 		start = clock();
 		precleanedGPU<10>(fs);
-		printf("precleanedGPU<10> done in %f seconds\n", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
+		printf("%25s = %11f\n", "precleanedGPU<10>", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
 		fs.close();
 
 		fs.open(argv[1], std::ios::in | std::ios::binary);
 		assertOpenFile(fs, argv[1]);
 		start = clock();
 		precleanedGPU<20>(fs);
-		printf("precleanedGPU<20> done in %f seconds\n", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
+		printf("%25s = %11f\n", "precleanedGPU<20>", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
 		fs.close();
 
 		fs.open(argv[1], std::ios::in | std::ios::binary);
 		assertOpenFile(fs, argv[1]);
 		start = clock();
 		precleanedJumpGPU<1>(fs);
-		printf("precleanedJumpGPU<1> done in %f seconds\n", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
+		printf("%25s = %11f\n", "precleanedJumpGPU<1>", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
 		fs.close();
 
 		fs.open(argv[1], std::ios::in | std::ios::binary);
 		assertOpenFile(fs, argv[1]);
 		start = clock();
 		precleanedJumpGPU<5>(fs);
-		printf("precleanedJumpGPU<5> done in %f seconds\n", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
+		printf("%25s = %11f\n", "precleanedJumpGPU<5>", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
 		fs.close();
 
 		fs.open(argv[1], std::ios::in | std::ios::binary);
 		assertOpenFile(fs, argv[1]);
 		start = clock();
 		precleanedJumpGPU<10>(fs);
-		printf("precleanedJumpGPU<10> done in %f seconds\n", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
+		printf("%25s = %11f\n", "precleanedJumpGPU<10>", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
 		fs.close();
 
 		fs.open(argv[1], std::ios::in | std::ios::binary);
 		assertOpenFile(fs, argv[1]);
 		start = clock();
 		precleanedJumpGPU<20>(fs);
-		printf("precleanedJumpGPU<20> done in %f seconds\n", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
+		printf("%25s = %11f\n", "precleanedJumpGPU<20>", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
 		fs.close();
 
 		fs.open(argv[1], std::ios::in | std::ios::binary);
 		start = clock();
 		precleanedStreamGPU<1>(fs);
-		printf("precleanedStreamGPU<1> done in %f seconds\n", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
+		printf("%25s = %11f\n", "precleanedStreamGPU<1>", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
 		fs.close();
 
-		//fs.open(argv[1], std::ios::in | std::ios::binary);
-		//assertOpenFile(fs, argv[1]);
-		//start = clock();
-		//precleanedStreamGPU<5>(fs);
-		//printf("precleanedStreamGPU<5> done in %f seconds\n", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
-		//fs.close();
+		fs.open(argv[1], std::ios::in | std::ios::binary);
+		assertOpenFile(fs, argv[1]);
+		start = clock();
+		precleanedStreamGPU<5>(fs);
+		printf("%25s = %11f\n", "precleanedStreamGPU<5>", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
+		fs.close();
 
-		//fs.open(argv[1], std::ios::in | std::ios::binary);
-		//assertOpenFile(fs, argv[1]);
-		//start = clock();
-		//precleanedStreamGPU<10>(fs);
-		//printf("precleanedStreamGPU<10> done in %f seconds\n", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
-		//fs.close();
+		fs.open(argv[1], std::ios::in | std::ios::binary);
+		assertOpenFile(fs, argv[1]);
+		start = clock();
+		precleanedStreamGPU<10>(fs);
+		printf("%25s = %11f\n", "precleanedStreamGPU<10>", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
+		fs.close();
 
 		fs.open(argv[1], std::ios::in | std::ios::binary);
 		assertOpenFile(fs, argv[1]);
 		start = clock();
 		precleanedStreamGPU<20>(fs);
-		printf("precleanedStreamGPU<20> done in %f seconds\n", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
+		printf("%25s = %11f\n", "precleanedStreamGPU<20>", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
+		fs.close();
+
+		fs.open(argv[1], std::ios::in);
+		assertOpenFile(fs, argv[1]);
+		start = clock();
+		precleanedStreamGPU<20>(fs);
+		printf("%25s = %11f\n", "precleanedStreamGPU<20> (text)", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
+		fs.close();
+
+		fs.open(argv[1], std::ios::in | std::ios::binary);
+		assertOpenFile(fs, argv[1]);
+		start = clock();
+		simpleCPU(fs);
+		printf("%25s = %11f\n", "simpleCPU", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
+		fs.close();
+
+		fs.open(argv[1], std::ios::in | std::ios::binary);
+		assertOpenFile(fs, argv[1]);
+		start = clock();
+		jumpCPU(fs);
+		printf("%25s = %11f\n", "jumpCPU", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
 		fs.close();
 
 		printf("\n");
