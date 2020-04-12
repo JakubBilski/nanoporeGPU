@@ -11,6 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\src\debugTools.cuh" />
     <ClInclude Include="..\..\src\defines.cuh" />
     <ClInclude Include="..\..\src\graphCreationK.cuh" />
     <ClInclude Include="..\..\src\utils.cuh" />
