@@ -22,14 +22,18 @@ void DisplaySubtreeRec(int* tree, int root, std::string gathered, int k)
 
 void DisplayTree(int* tree)
 {
+	std::cout << "\nTree:\n";
 	DisplaySubtreeRec(tree, 0, "", 0);
 }
 
 void DisplayTable(int* table, int length)
 {
+	std::cout << "\nTable (length " << length << "):\n";
 	for (size_t i = 0; i < length; i++)
 	{
 		std::cout << table[i] << " ";
+		if(i%10 == 9)
+			std::cout << std::endl;
 	}
 	std::cout << std::endl;
 }

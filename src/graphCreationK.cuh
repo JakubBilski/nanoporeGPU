@@ -9,6 +9,10 @@ void AddPrecleanedChunkToGraph(int noBlocks, char* file, int length, int* tree, 
 	int currentNode;	//index of node correspoding to already processed letters' string, always multiple of 4
 	bool isStringValid;
 	int merLetters[TMerLength];
+	//if (threadIdx.x == 0)
+	//{
+	//	printf("[block %d] elo jestem w srodku\n", blockIdx.x);
+	//}
 	while (thid < length - TMerLength)
 	{
 		k = 0;
@@ -44,6 +48,8 @@ void AddPrecleanedChunkToGraph(int noBlocks, char* file, int length, int* tree, 
 				isStringValid = false;
 				break;
 			}
+			default:
+				printf("Letter[%d] was ilegal: %c!!!!\n", thid + i, (char)(merLetters[i]));
 			}
 			//check isStringValid here, or let it go through all of the letters?
 		}
@@ -55,16 +61,18 @@ void AddPrecleanedChunkToGraph(int noBlocks, char* file, int length, int* tree, 
 				//order of this ifs should probably be altered
 				if (nextNode == 0 && atomicExch(&(tree[currentNode + merLetters[k]]), -1) == 0)
 				{
+					//if(node was not present in tree) && (this thread was ordered to allocate new node)
 					int newNode = atomicAdd(treeLength, 4);
 					tree[currentNode + merLetters[k]] = newNode;
 					currentNode = newNode;
 					k++;
 				}
-				else if (nextNode != -1 && nextNode != 0) //node present
+				else if (nextNode != -1 && nextNode != 0) //node is present
 				{
 					currentNode = nextNode;
 					k++;
 				}
+				//else busy waiting
 			}
 			//k == merLength, currentNode == (node where we store edges' weights)
 			switch (file[thid + TMerLength])
