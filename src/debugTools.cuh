@@ -28,7 +28,7 @@ void DisplayTree(int* tree)
 
 void DisplayTable(int* table, int length)
 {
-	std::cout << "\nTable (length " << length << "):\n";
+	std::cout << "\nTable (length " << length << ", size " << (length * sizeof(int))/(1024*1024) << " MB):\n";
 	for (size_t i = 0; i < length; i++)
 	{
 		std::cout << table[i] << " ";

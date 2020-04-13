@@ -8,17 +8,13 @@ void AddPrecleanedChunkToGraph(int noBlocks, char* file, int length, int* tree, 
 	int k;	//index of letter being processed
 	int currentNode;	//index of node correspoding to already processed letters' string, always multiple of 4
 	bool isStringValid;
-	int merLetters[TMerLength];
-	//if (threadIdx.x == 0)
-	//{
-	//	printf("[block %d] elo jestem w srodku\n", blockIdx.x);
-	//}
-	while (thid < length - TMerLength)
+	int merLetters[TMerLength];	//string, loaded to thread memory to speed up access
+	while (thid < length - TMerLength - 1)
 	{
 		k = 0;
 		currentNode = 0;
 		isStringValid = true;
-		for (int i = 0; i < TMerLength; i++)
+		for (int i = 0; i < TMerLength; i++) //loading letters from global memory
 		{
 			merLetters[i] = file[thid + i];
 			switch (merLetters[i])
@@ -53,21 +49,28 @@ void AddPrecleanedChunkToGraph(int noBlocks, char* file, int length, int* tree, 
 			}
 			//check isStringValid here, or let it go through all of the letters?
 		}
-		if (isStringValid)
+		if (isStringValid) //if loaded string is a valid part of sequence (it doesn't contain \n)
 		{
 			while (k < TMerLength)
 			{
-				int nextNode = tree[currentNode + merLetters[k]];
-				//order of this ifs should probably be altered
-				if (nextNode == 0 && atomicExch(&(tree[currentNode + merLetters[k]]), -1) == 0)
+				int nextNode = tree[currentNode + merLetters[k]];	//get index of the node corresponding to the next letter
+
+				//following 'if' explanation:
+				//if this thread reads value 0 from the next node
+				//it means that tree[currentNode + merLetters[k]] node has not yet been allocated
+				//Then this thread exchanges tree[currentNode + merLetters[k]] node value (which was 0, but might have already changed in the meantime)
+				//with a -1 value. Then it examines the value that he got from the exchange.
+				//If it's 0, that means the thread was the one that got the task of allocating the memory
+				//for a new node. Otherwise it is -1, which means there was some other, faster node,
+				//that exchanged the value faster
+				if (atomicCAS(&(tree[currentNode + merLetters[k]]), 0, -1) == 0)
 				{
-					//if(node was not present in tree) && (this thread was ordered to allocate new node)
 					int newNode = atomicAdd(treeLength, 4);
 					tree[currentNode + merLetters[k]] = newNode;
 					currentNode = newNode;
 					k++;
 				}
-				else if (nextNode != -1 && nextNode != 0) //node is present
+				else if (nextNode != -1 && nextNode != 0) //if node is present
 				{
 					currentNode = nextNode;
 					k++;
@@ -75,7 +78,7 @@ void AddPrecleanedChunkToGraph(int noBlocks, char* file, int length, int* tree, 
 				//else busy waiting
 			}
 			//k == merLength, currentNode == (node where we store edges' weights)
-			switch (file[thid + TMerLength])
+			switch (file[thid + TMerLength]) //check what k-mer this string transforms into and increase proper edge weight
 			{
 			case 'A':
 			{
@@ -103,6 +106,6 @@ void AddPrecleanedChunkToGraph(int noBlocks, char* file, int length, int* tree, 
 			//}
 			}
 		}
-		thid += BLOCK_SIZE * noBlocks;
+		thid += BLOCK_SIZE * noBlocks;	//go to the next k-mer
 	}
 }

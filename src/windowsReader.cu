@@ -25,7 +25,9 @@ int main(int argc, char* argv[])
       return 0;
     }
 
-	printf("Machine: %d MB process memory, %d MB device memory\n", (sizeof(char)*HOST_CHUNK_SIZE)/(1024*1024), (sizeof(char)*DEVICE_CHUNK_SIZE) / (1024 * 1024));
+	printf("Machine:\n\t%d MB process memory\n", (sizeof(char)*HOST_CHUNK_SIZE) / (1024 * 1024));
+	printf("\t%d MB device data memory\n", (sizeof(char)*DEVICE_CHUNK_SIZE) / (1024 * 1024));
+	printf("\t%d MB device tree memory\n", (sizeof(int)*DEVICE_TREE_SIZE) / (1024 * 1024));
 	printf("Starting\n");
 
 	const int noTests = 1;
@@ -69,12 +71,12 @@ int main(int argc, char* argv[])
 		//printf("%25s = %11f\n", "precleanedJumpGPU<1>", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
 		//fs.close();
 
-		fs.open(argv[1], std::ios::in | std::ios::binary);
-		assertOpenFile(fs, argv[1]);
-		start = clock();
-		precleanedJumpGPU<5>(fs);
-		printf("%25s = %11f\n", "precleanedJumpGPU<5>", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
-		fs.close();
+		//fs.open(argv[1], std::ios::in | std::ios::binary);
+		//assertOpenFile(fs, argv[1]);
+		//start = clock();
+		//precleanedJumpGPU<5>(fs);
+		//printf("%25s = %11f\n", "precleanedJumpGPU<5>", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
+		//fs.close();
 
 		//fs.open(argv[1], std::ios::in | std::ios::binary);
 		//assertOpenFile(fs, argv[1]);
@@ -205,7 +207,8 @@ void precleanedGPU(std::ifstream& fs)
 	gpuErrchk(cudaMemcpy(&finalTreeLength, d_treeLength, sizeof(int), cudaMemcpyDeviceToHost));
 	int* finalTree = (int*)malloc(sizeof(int)*finalTreeLength);
 	gpuErrchk(cudaMemcpy(finalTree, d_tree, finalTreeLength*sizeof(int), cudaMemcpyDeviceToHost));
-	DisplayTree(finalTree);
+	printf("Treelength: %d\n", finalTreeLength);
+	//DisplayTree(finalTree);
 	//DisplayTable(finalTree, finalTreeLength);
 	gpuErrchk(cudaFree(d_chunk));
 	gpuErrchk(cudaFree(d_tree));
