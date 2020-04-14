@@ -28,7 +28,7 @@ void DisplayTree(int* tree)
 
 void DisplayTable(int* table, int length)
 {
-	std::cout << "\nTable (length " << length << ", size " << (length * sizeof(int))/(1024*1024) << " MB):\n";
+	std::cout << "\nTable\n";
 	for (size_t i = 0; i < length; i++)
 	{
 		std::cout << table[i] << " ";
@@ -36,4 +36,16 @@ void DisplayTable(int* table, int length)
 			std::cout << std::endl;
 	}
 	std::cout << std::endl;
+}
+
+void DisplaySizeInfo(int finalTreeLength, int merLength)
+{
+	int thisMerTreeMaxLength = 1;
+	for (int i = 0; i < merLength; i++)
+	{
+		thisMerTreeMaxLength *= 4;
+		thisMerTreeMaxLength += 1;
+	}
+	thisMerTreeMaxLength *= 4;
+	printf("Tree size: %d (%d MB), %.2f%% coverage\n", finalTreeLength, (finalTreeLength * sizeof(int)) / (1024 * 1024), 100.0f * finalTreeLength / thisMerTreeMaxLength);
 }

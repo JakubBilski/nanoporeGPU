@@ -34,13 +34,13 @@ int main(int argc, char* argv[])
 	for (size_t test = 0; test < noTests; test++)
 	{
 		printf(argv[1]);
-		printf(", run %d\n", (int)test);
+		printf(", %d-mers, run %d\n", MER_LENGHT, (int)test);
 
 		std::ifstream fs(argv[1], std::ios::in | std::ios::binary);
 		assertOpenFile(fs, argv[1]);
 		clock_t start = clock();
-		precleanedGPU<5>(fs);
-		printf("%25s = %11f\n", "precleanedGPU<5>", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
+		precleanedJumpGPU<10>(fs);
+		printf("%25s = %11f\n", "precleanedJumpGPU<10>", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
 		fs.close();
 
 		//fs.open(argv[1], std::ios::in | std::ios::binary);
@@ -207,7 +207,7 @@ void precleanedGPU(std::ifstream& fs)
 	gpuErrchk(cudaMemcpy(&finalTreeLength, d_treeLength, sizeof(int), cudaMemcpyDeviceToHost));
 	int* finalTree = (int*)malloc(sizeof(int)*finalTreeLength);
 	gpuErrchk(cudaMemcpy(finalTree, d_tree, finalTreeLength*sizeof(int), cudaMemcpyDeviceToHost));
-	printf("Treelength: %d\n", finalTreeLength);
+	DisplaySizeInfo(finalTreeLength, MER_LENGHT);
 	//DisplayTree(finalTree);
 	//DisplayTable(finalTree, finalTreeLength);
 	gpuErrchk(cudaFree(d_chunk));
@@ -315,7 +315,8 @@ void precleanedJumpGPU(std::ifstream& fs)
 	gpuErrchk(cudaMemcpy(&finalTreeLength, d_treeLength, sizeof(int), cudaMemcpyDeviceToHost));
 	int* finalTree = (int*)malloc(sizeof(int)*finalTreeLength);
 	gpuErrchk(cudaMemcpy(finalTree, d_tree, finalTreeLength * sizeof(int), cudaMemcpyDeviceToHost));
-	DisplayTree(finalTree);
+	DisplaySizeInfo(finalTreeLength, MER_LENGHT);
+	//DisplayTree(finalTree);
 	//DisplayTable(finalTree, finalTreeLength);
 	gpuErrchk(cudaFree(d_chunk));
 	gpuErrchk(cudaFree(d_tree));

@@ -58,11 +58,8 @@ void AddPrecleanedChunkToGraph(int noBlocks, char* file, int length, int* tree, 
 				//following 'if' explanation:
 				//if this thread reads value 0 from the next node
 				//it means that tree[currentNode + merLetters[k]] node has not yet been allocated
-				//Then this thread exchanges tree[currentNode + merLetters[k]] node value (which was 0, but might have already changed in the meantime)
-				//with a -1 value. Then it examines the value that he got from the exchange.
-				//If it's 0, that means the thread was the one that got the task of allocating the memory
-				//for a new node. Otherwise it is -1, which means there was some other, faster node,
-				//that exchanged the value faster
+				//Then this thread exchanges this 0 with a -1 valuem which tells the other threads that the memory is being allocated.
+				//The whole operation is atomic, so only one thread will read the 0 value and perform the allocation
 				if (atomicCAS(&(tree[currentNode + merLetters[k]]), 0, -1) == 0)
 				{
 					int newNode = atomicAdd(treeLength, 4);
