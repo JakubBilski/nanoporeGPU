@@ -2,10 +2,12 @@ void DisplaySubtreeRec(int* tree, int root, std::string gathered, int k)
 {
 	if (k == MER_LENGHT)
 	{
-		std::cout << gathered << " -> " << gathered.substr(1) << "A " << tree[root] << std::endl;
-		std::cout << gathered << " -> " << gathered.substr(1) << "T " << tree[root + 1] << std::endl;
-		std::cout << gathered << " -> " << gathered.substr(1) << "C " << tree[root + 2] << std::endl;
-		std::cout << gathered << " -> " << gathered.substr(1) << "G " << tree[root + 3] << std::endl;
+		if(tree[root] == -1)
+			std::cout << gathered << std::endl;
+		//std::cout << gathered << " -> " << gathered.substr(1) << "A " << tree[root] << std::endl;
+		//std::cout << gathered << " -> " << gathered.substr(1) << "T " << tree[root + 1] << std::endl;
+		//std::cout << gathered << " -> " << gathered.substr(1) << "C " << tree[root + 2] << std::endl;
+		//std::cout << gathered << " -> " << gathered.substr(1) << "G " << tree[root + 3] << std::endl;
 	}
 	else
 	{

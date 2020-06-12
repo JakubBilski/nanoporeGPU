@@ -15,6 +15,7 @@
     <ClInclude Include="..\..\src\defines.cuh" />
     <ClInclude Include="..\..\src\graphCreationK.cuh" />
     <ClInclude Include="..\..\src\utils.cuh" />
+    <ClInclude Include="..\..\src\weakLeavesDeletionK.cuh" />
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="..\..\src\windowsReader.cu" />
