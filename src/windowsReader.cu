@@ -12,17 +12,22 @@
 #include "graphCreationK.cuh"
 #include "weakLeavesDeletionK.cuh"
 #include "debugTools.cuh"
+#include "tempOperations.cuh"
 
-template <int TNoBlocks> void precleanedJumpGPU(std::ifstream& fs);
+template <int TNoBlocks> void precleanedJumpGPU(std::ifstream& fs, std::fstream& ts);
 
 int main(int argc, char* argv[])
 {
-    if(argc != 2)
+    if(argc != 2 && argc != 3)
     {
-      printf("Usage: reader file_path\n");
+      printf("Usage: reader file_path temp_file_path\n");
       return 0;
     }
-
+	char* tempFilePath = "./tempFile.txt";
+	if (argc == 3)
+	{
+		tempFilePath = argv[2];
+	}
 	printf("Machine:\n\t%d MB process memory\n", (sizeof(char)*HOST_CHUNK_SIZE) / (1024 * 1024));
 	printf("\t%d MB device data memory\n", (sizeof(char)*DEVICE_CHUNK_SIZE) / (1024 * 1024));
 	printf("\t%d MB device tree memory\n", (sizeof(int)*DEVICE_TREE_SIZE) / (1024 * 1024));
@@ -36,18 +41,25 @@ int main(int argc, char* argv[])
 
 		std::ifstream fs(argv[1], std::ios::in | std::ios::binary);
 		assertOpenFile(fs, argv[1]);
+		std::fstream ts(tempFilePath, std::ios::in | std::ios::out | std::ios::binary | std::ofstream::trunc);
+		if (!ts.is_open())
+		{
+			printf("Nie udalo sie otworzyc pliku temp, a program z jakiegos powodu odmawia stworzenia go\n");
+			return 0;
+		}
 		clock_t start = clock();
-		precleanedJumpGPU<10>(fs);
+
+		precleanedJumpGPU<10>(fs, ts);
 		printf("%25s = %11f\n", "precleanedJumpGPU<10>", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
 		fs.close();
-
+		ts.close();
 		printf("\n");
 	}
 	return 0;
 }
 
 template <int TNoBlocks>
-void precleanedJumpGPU(std::ifstream& fs)
+void precleanedJumpGPU(std::ifstream& fs, std::fstream& ts)
 {
 	char* d_chunk;
 	int* d_tree;
@@ -88,6 +100,7 @@ void precleanedJumpGPU(std::ifstream& fs)
 				{
 					gpuErrchk(cudaMemcpy(d_chunk, clearedChunk, clearedChunkSize * sizeof(char), cudaMemcpyHostToDevice));
 					AddPrecleanedChunkToGraph<MER_LENGHT> << <TNoBlocks, BLOCK_SIZE >> > (TNoBlocks, d_chunk, clearedChunkSize, d_tree, d_treeLength);
+					AddPrecleanedChunkToTemp(ts, clearedChunk, clearedChunkSize);
 					kernelErrchk();
 					clearedChunkSize = 0;
 				}

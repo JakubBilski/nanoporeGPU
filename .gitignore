@@ -1,5 +1,8 @@
 nanoporeGPU/
 
+# all data
+data/
+
 # files with data to process
 *.fastq
 

@@ -14,6 +14,7 @@
     <ClInclude Include="..\..\src\debugTools.cuh" />
     <ClInclude Include="..\..\src\defines.cuh" />
     <ClInclude Include="..\..\src\graphCreationK.cuh" />
+    <ClInclude Include="..\..\src\tempOperations.cuh" />
     <ClInclude Include="..\..\src\utils.cuh" />
     <ClInclude Include="..\..\src\weakLeavesDeletionK.cuh" />
   </ItemGroup>
