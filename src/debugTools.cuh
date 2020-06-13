@@ -2,12 +2,14 @@ void DisplaySubtreeRec(int* tree, int root, std::string gathered, int k)
 {
 	if (k == MER_LENGHT)
 	{
-		if(tree[root] == -1)
-			std::cout << gathered << std::endl;
-		//std::cout << gathered << " -> " << gathered.substr(1) << "A " << tree[root] << std::endl;
-		//std::cout << gathered << " -> " << gathered.substr(1) << "T " << tree[root + 1] << std::endl;
-		//std::cout << gathered << " -> " << gathered.substr(1) << "C " << tree[root + 2] << std::endl;
-		//std::cout << gathered << " -> " << gathered.substr(1) << "G " << tree[root + 3] << std::endl;
+		std::cout << gathered << " -> " << gathered.substr(1) << "A " << tree[root];
+		std::cout << ((tree[root] == -1) ? "\t weak kmer!\n" : (tree[root] == 0) ? "\t edge not present!\n" : "\n");
+		std::cout << gathered << " -> " << gathered.substr(1) << "T " << tree[root + 1];
+		std::cout << ((tree[root+1] == -1) ? "\t weak kmer!\n" : (tree[root+1] == 0) ? "\t edge not present!\n" : "\n");
+		std::cout << gathered << " -> " << gathered.substr(1) << "C " << tree[root + 2];
+		std::cout << ((tree[root+2] == -1) ? "\t weak kmer!\n" : (tree[root+2] == 0) ? "\t edge not present!\n" : "\n");
+		std::cout << gathered << " -> " << gathered.substr(1) << "G " << tree[root + 3];
+		std::cout << ((tree[root+3] == -1) ? "\t weak kmer!\n" : (tree[root+3] == 0) ? "\t edge not present!\n" : "\n");
 	}
 	else
 	{

@@ -32,6 +32,24 @@ void DeleteWeakLeaves(int noBlocks, int* tree)
 			tree[node+2] = -1;
 			tree[node+3] = -1;
 		}
+		else
+		{
+			for (int i = 0; i < 4; i++)
+			{
+				int searchingMask = thid >> 2;
+				int searchingK = 0;
+				int searchingNode = 0;
+				while (searchingK < TMerLength - 1)	//one less
+				{
+					int nextIndex = searchingMask & 3;
+					searchingNode = tree[searchingNode + nextIndex];
+					searchingK++;
+					searchingMask = searchingMask >> 2;
+				}
+				//i is the last nextIndex
+				tree[node+i] = tree[searchingNode + i];
+			}
+		}
 		thid += BLOCK_SIZE * noBlocks;	//go to the next leaf
 	}
 }
