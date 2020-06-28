@@ -11,9 +11,14 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\src\correct.h" />
+    <ClInclude Include="..\..\src\correctInner.h" />
     <ClInclude Include="..\..\src\debugTools.cuh" />
     <ClInclude Include="..\..\src\defines.cuh" />
+    <ClInclude Include="..\..\src\defines.h" />
+    <ClInclude Include="..\..\src\editDistance.h" />
     <ClInclude Include="..\..\src\graphCreationK.cuh" />
+    <ClInclude Include="..\..\src\graphUtils.h" />
     <ClInclude Include="..\..\src\tempOperations.cuh" />
     <ClInclude Include="..\..\src\utils.cuh" />
     <ClInclude Include="..\..\src\weakLeavesDeletionK.cuh" />
@@ -24,21 +29,21 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{AADD2331-34FD-49DA-916C-250A980BCD9E}</ProjectGuid>
     <RootNamespace>nanoporeGPU</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">

@@ -19,7 +19,7 @@ inline void kernelAssert(const char *file, int line, bool abort = true)
 	}
 }
 
-inline void assertOpenFile(const std::ifstream & fs, char* fileName)
+inline void assertOpenFile(const std::fstream & fs, char* fileName)
 {
 	if (!fs.is_open())
 	{
@@ -29,3 +29,4 @@ inline void assertOpenFile(const std::ifstream & fs, char* fileName)
 		exit(0);
 	}
 }
+

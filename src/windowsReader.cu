@@ -14,10 +14,17 @@
 #include "debugTools.cuh"
 #include "tempOperations.cuh"
 
-template <int TNoBlocks> void precleanedJumpGPU(std::ifstream& fs, std::fstream& ts);
+#include "defines.h"
+#include "Correct.h"
+
+template <int TNoBlocks> int* precleanedJumpGPU(std::fstream& fs, std::fstream& ts);
 
 int main(int argc, char* argv[])
 {
+#ifdef DEBUG
+	TestCorrect();
+	return 0;
+#else
     if(argc != 2 && argc != 3)
     {
       printf("Usage: reader file_path temp_file_path\n");
@@ -28,6 +35,7 @@ int main(int argc, char* argv[])
 	{
 		tempFilePath = argv[2];
 	}
+	char* inputFilePath = argv[1];
 	printf("Machine:\n\t%d MB process memory\n", (sizeof(char)*HOST_CHUNK_SIZE) / (1024 * 1024));
 	printf("\t%d MB device data memory\n", (sizeof(char)*DEVICE_CHUNK_SIZE) / (1024 * 1024));
 	printf("\t%d MB device tree memory\n", (sizeof(int)*DEVICE_TREE_SIZE) / (1024 * 1024));
@@ -36,30 +44,40 @@ int main(int argc, char* argv[])
 	const int noTests = 1;
 	for (size_t test = 0; test < noTests; test++)
 	{
-		printf(argv[1]);
+		printf(inputFilePath);
 		printf(", %d-mers, run %d\n", MER_LENGHT, (int)test);
 
-		std::ifstream fs(argv[1], std::ios::in | std::ios::binary);
-		assertOpenFile(fs, argv[1]);
+		std::fstream fs(inputFilePath, std::ios::in | std::ios::binary);
+		assertOpenFile(fs, inputFilePath);
 		std::fstream ts(tempFilePath, std::ios::in | std::ios::out | std::ios::binary | std::ofstream::trunc);
-		if (!ts.is_open())
-		{
-			printf("Nie udalo sie otworzyc pliku temp, a program z jakiegos powodu odmawia stworzenia go\n");
-			return 0;
-		}
+		assertOpenFile(ts, tempFilePath);
 		clock_t start = clock();
 
-		precleanedJumpGPU<10>(fs, ts);
+		int* DBG = precleanedJumpGPU<10>(fs, ts);
 		printf("%25s = %11f\n", "precleanedJumpGPU<10>", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
 		fs.close();
 		ts.close();
+
+		char* tempFilePath2 = "result_file_aa.txt";
+		fs.open(tempFilePath, std::ios::in | std::ios::binary);
+		assertOpenFile(fs, tempFilePath);
+		ts.open(tempFilePath2, std::ios::in | std::ios::out | std::ios::binary | std::ofstream::trunc);
+		assertOpenFile(ts, tempFilePath2);
+		start = clock();
+
+		Correct(fs, ts, DBG);
+		printf("%25s = %11f\n", "precleanedJumpGPU<10>", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
+		fs.close();
+		ts.close();
+
 		printf("\n");
 	}
 	return 0;
+#endif
 }
 
 template <int TNoBlocks>
-void precleanedJumpGPU(std::ifstream& fs, std::fstream& ts)
+int* precleanedJumpGPU(std::fstream& fs, std::fstream& ts)
 {
 	char* d_chunk;
 	int* d_tree;
@@ -167,4 +185,5 @@ void precleanedJumpGPU(std::ifstream& fs, std::fstream& ts)
 	gpuErrchk(cudaFree(d_treeLength));
 	free(chunk);
 	free(clearedChunk);
+	return finalTree;
 }
