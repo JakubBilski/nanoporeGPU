@@ -14,10 +14,11 @@ void CorrectRead(std::string& read, std::vector<int>& DBG, int k)
 {
 	int read_len = read.length();
 	bool check_head = false;
+	int act_kmer_id = -1;
 	int i = 0;
 	for (; i < read_len - k; i++)
 	{
-		if (get_kmer_id(read.substr(i, k), DBG))
+		if (act_kmer_id = get_kmer_id(read.substr(i, k), DBG))
 		{
 			check_head = true;
 			//CorrectHead(read.substr(0, i),...);
@@ -35,24 +36,38 @@ void CorrectRead(std::string& read, std::vector<int>& DBG, int k)
 	}
 	int weak_region = i;
 	std::string begin_kmer = "";
-	for (; i < read_len - k; i++)
+	bool inside_graph = true;
+	for (i++; i < read_len - k; i++)
 	{
-		std::string end_kmer = read.substr(i, k);
-		if (get_kmer_id(end_kmer, DBG))
+		if (inside_graph)
 		{
-			if (i > weak_region + 1)
+			int next_kmer_id = DBG[act_kmer_id + char_id(read[i+k])];
+			if (next_kmer_id)
+			{
+				act_kmer_id = next_kmer_id;
+			}
+			else
+			{
+				inside_graph = false;
+				begin_kmer = read.substr(i-1, k);
+				weak_region = i - 1;
+			}
+		}
+		else
+		{
+			std::string end_kmer = read.substr(i, k);
+			if (act_kmer_id = get_kmer_id(end_kmer, DBG))
 			{
 				int weak_len = i - weak_region - k;
-				std::string corrected_weak = CorrectInner(begin_kmer, end_kmer, 
+				std::string corrected_weak = CorrectInner(begin_kmer, end_kmer,
 					read.substr(weak_region + k, weak_len),
 					100, DBG);
 				read = read.substr(0, weak_region + k) + corrected_weak + read.substr(i);
 				i = i + corrected_weak.size() - weak_len;
 				read_len = read_len + corrected_weak.size() - weak_len;
+
+				inside_graph = true;
 			}
-				
-			weak_region = i;
-			begin_kmer = end_kmer;
 		}
 	}
 	//correct tail
