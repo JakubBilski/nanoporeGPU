@@ -1,6 +1,6 @@
-void DisplaySubtreeRec(int* tree, int root, std::string gathered, int k)
+void DisplaySubtreeRec(int* tree, int root, std::string gathered, int k, int merLength)
 {
-	if (k == MER_LENGHT)
+	if (k == merLength)
 	{
 		std::cout << gathered << " -> " << gathered.substr(1) << "A " << tree[root];
 		std::cout << ((tree[root] == -1) ? "\t weak kmer!\n" : (tree[root] == 0) ? "\t edge not present!\n" : "\n");
@@ -14,20 +14,20 @@ void DisplaySubtreeRec(int* tree, int root, std::string gathered, int k)
 	else
 	{
 		if(tree[root] != 0)
-			DisplaySubtreeRec(tree, tree[root], gathered + "A", k + 1);
+			DisplaySubtreeRec(tree, tree[root], gathered + "A", k + 1, merLength);
 		if (tree[root+1] != 0)
-			DisplaySubtreeRec(tree, tree[root + 1], gathered + "T", k + 1);
+			DisplaySubtreeRec(tree, tree[root + 1], gathered + "T", k + 1, merLength);
 		if (tree[root+2] != 0)
-			DisplaySubtreeRec(tree, tree[root + 2], gathered + "C", k + 1);
+			DisplaySubtreeRec(tree, tree[root + 2], gathered + "C", k + 1, merLength);
 		if (tree[root+3] != 0)
-			DisplaySubtreeRec(tree, tree[root + 3], gathered + "G", k + 1);
+			DisplaySubtreeRec(tree, tree[root + 3], gathered + "G", k + 1, merLength);
 	}
 }
 
-void DisplayTree(int* tree)
+void DisplayTree(int* tree, int merLength)
 {
 	std::cout << "\nTree:\n";
-	DisplaySubtreeRec(tree, 0, "", 0);
+	DisplaySubtreeRec(tree, 0, "", 0, merLength);
 }
 
 void DisplayTable(int* table, int length)

@@ -17,10 +17,10 @@
 #include "defines.h"
 #include "Correct.h"
 
-template <int TNoBlocks>
+template <int TNoBlocks, int merLength>
 int* precleanedToGraph(std::fstream& fs, int& out_treeLength);
 
-template <int TNoBlocks>
+template <int TNoBlocks, int merLength>
 int* fastqToGraphAndPrecleaned(std::fstream& fs, std::fstream& ts, int& out_treeLength);
 
 
@@ -50,7 +50,7 @@ int main(int argc, char* argv[])
 	for (size_t test = 0; test < noTests; test++)
 	{
 		printf(inputFilePath);
-		printf(", %d-mers, run %d\n", MER_LENGHT, (int)test);
+		printf("Run %d\n", (int)test);
 
 		std::fstream fs(inputFilePath, std::ios::in | std::ios::binary);
 		assertOpenFile(fs, inputFilePath);
@@ -59,7 +59,7 @@ int main(int argc, char* argv[])
 		clock_t start = clock();
 
 		int DBG_size = 0;
-		int* DBG = fastqToGraphAndPrecleaned<10>(fs, ts, DBG_size);
+		int* DBG = fastqToGraphAndPrecleaned<10, MER_LENGTH_1>(fs, ts, DBG_size);
 		printf("%25s = %11f\n", "fastqToGraphAndPrecleaned<10>", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
 		fs.close();
 		ts.close();
@@ -72,16 +72,20 @@ int main(int argc, char* argv[])
 		start = clock();
 
 		std::vector<int> DBG_v(DBG, DBG + DBG_size);
-		Correct(fs, ts, DBG_v, MER_LENGHT);
+		Correct(fs, ts, DBG_v, MER_LENGTH_1);
 		printf("%25s = %11f\n", "Correct", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
 		fs.close();
 		ts.close();
+
+		//start of the reusable block
+
+		free(DBG);
 
 		fs.open(tempFilePath2, std::ios::in | std::ios::binary);
 		assertOpenFile(fs, tempFilePath);
 		start = clock();
 
-		DBG = precleanedToGraph<10>(fs, DBG_size);
+		DBG = precleanedToGraph<10, MER_LENGTH_2>(fs, DBG_size);
 		printf("%25s = %11f\n", "precleanedToGraph<10>", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
 		fs.close();
 
@@ -92,11 +96,41 @@ int main(int argc, char* argv[])
 		assertOpenFile(ts, tempFilePath2);
 		start = clock();
 
-		std::vector<int> DBG_v2(DBG, DBG + DBG_size);
-		Correct(fs, ts, DBG_v2, MER_LENGHT);
+		DBG_v = std::vector<int>(DBG, DBG + DBG_size);
+		Correct(fs, ts, DBG_v, MER_LENGTH_2);
 		printf("%25s = %11f\n", "Correct", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
 		fs.close();
 		ts.close();
+
+		//end of the reusable block
+				
+		//start of the reusable block
+
+		free(DBG);
+
+		fs.open(tempFilePath3, std::ios::in | std::ios::binary);
+		assertOpenFile(fs, tempFilePath);
+		start = clock();
+
+		DBG = precleanedToGraph<10, MER_LENGTH_3>(fs, DBG_size);
+		printf("%25s = %11f\n", "precleanedToGraph<10>", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
+		fs.close();
+
+		char* tempFilePath4 = "result_file_aa3.txt";
+		fs.open(tempFilePath3, std::ios::in | std::ios::binary);
+		assertOpenFile(fs, tempFilePath);
+		ts.open(tempFilePath4, std::ios::in | std::ios::out | std::ios::binary | std::ofstream::trunc);
+		assertOpenFile(ts, tempFilePath2);
+		start = clock();
+
+		DBG_v = std::vector<int>(DBG, DBG + DBG_size);
+		Correct(fs, ts, DBG_v, MER_LENGTH_3);
+		printf("%25s = %11f\n", "Correct", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
+		fs.close();
+		ts.close();
+
+		//end of the reusable block
+
 
 		printf("\n");
 	}
@@ -104,7 +138,7 @@ int main(int argc, char* argv[])
 #endif
 }
 
-template <int TNoBlocks>
+template <int TNoBlocks, int merLength>
 int* precleanedToGraph(std::fstream& fs, int& out_treeLength)
 {
 	char* d_chunk;
@@ -151,7 +185,7 @@ int* precleanedToGraph(std::fstream& fs, int& out_treeLength)
 			else
 			{
 				//plik sie skonczyl, odpalamy kernel pomimo niewypelnienia do konca pamieci gpu
-				AddPrecleanedChunkToGraph<MER_LENGHT> << <TNoBlocks, BLOCK_SIZE >> > (TNoBlocks, d_chunk, loadedToGPU, d_tree, d_treeLength);
+				AddPrecleanedChunkToGraph<merLength> << <TNoBlocks, BLOCK_SIZE >> > (TNoBlocks, d_chunk, loadedToGPU, d_tree, d_treeLength);
 				kernelErrchk();
 				readEnded = true;
 			}
@@ -165,18 +199,19 @@ int* precleanedToGraph(std::fstream& fs, int& out_treeLength)
 			}
 			//skopiuj ile sie zmiesci do gpu i odpal kernel
 			gpuErrchk(cudaMemcpy(d_chunk + loadedToGPU, chunk + lastNewline, (i - lastNewline) * sizeof(char), cudaMemcpyHostToDevice));
-			AddPrecleanedChunkToGraph<MER_LENGHT> << <TNoBlocks, BLOCK_SIZE >> > (TNoBlocks, d_chunk, loadedToGPU + i - lastNewline, d_tree, d_treeLength);
+			AddPrecleanedChunkToGraph<merLength> << <TNoBlocks, BLOCK_SIZE >> > (TNoBlocks, d_chunk, loadedToGPU + i - lastNewline, d_tree, d_treeLength);
 			kernelErrchk();
 			loadedToGPU = 0;
 			lastNewline = i;
 		}
 	}
-	DeleteWeakLeaves<MER_LENGHT> << <TNoBlocks, BLOCK_SIZE >> > (TNoBlocks, d_tree);
+	DeleteWeakLeaves<merLength> << <TNoBlocks, BLOCK_SIZE >> > (TNoBlocks, d_tree);
 	kernelErrchk();
 	int finalTreeLength = 0;
 	gpuErrchk(cudaMemcpy(&finalTreeLength, d_treeLength, sizeof(int), cudaMemcpyDeviceToHost));
 	int* finalTree = (int*)malloc(sizeof(int)*finalTreeLength);
 	gpuErrchk(cudaMemcpy(finalTree, d_tree, finalTreeLength * sizeof(int), cudaMemcpyDeviceToHost));
+	DisplaySizeInfo(finalTreeLength, merLength);
 	gpuErrchk(cudaFree(d_chunk));
 	gpuErrchk(cudaFree(d_tree));
 	gpuErrchk(cudaFree(d_treeLength));
@@ -185,7 +220,7 @@ int* precleanedToGraph(std::fstream& fs, int& out_treeLength)
 	return finalTree;
 }
 
-template <int TNoBlocks>
+template <int TNoBlocks, int merLength>
 int* fastqToGraphAndPrecleaned(std::fstream& fs, std::fstream& ts, int& out_treeLength)
 {
 	char* d_chunk;
@@ -226,7 +261,7 @@ int* fastqToGraphAndPrecleaned(std::fstream& fs, std::fstream& ts, int& out_tree
 				if (clearedChunkSize + i - startOfLetters == DEVICE_CHUNK_SIZE)
 				{
 					gpuErrchk(cudaMemcpy(d_chunk, clearedChunk, clearedChunkSize * sizeof(char), cudaMemcpyHostToDevice));
-					AddPrecleanedChunkToGraph<MER_LENGHT> << <TNoBlocks, BLOCK_SIZE >> > (TNoBlocks, d_chunk, clearedChunkSize, d_tree, d_treeLength);
+					AddPrecleanedChunkToGraph<merLength> << <TNoBlocks, BLOCK_SIZE >> > (TNoBlocks, d_chunk, clearedChunkSize, d_tree, d_treeLength);
 					AddPrecleanedChunkToTemp(ts, clearedChunk, clearedChunkSize);
 					kernelErrchk();
 					clearedChunkSize = 0;
@@ -278,15 +313,15 @@ int* fastqToGraphAndPrecleaned(std::fstream& fs, std::fstream& ts, int& out_tree
 		}
 	}
 	gpuErrchk(cudaMemcpy(d_chunk, clearedChunk, clearedChunkSize * sizeof(char), cudaMemcpyHostToDevice));
-	AddPrecleanedChunkToGraph<MER_LENGHT> << <TNoBlocks, BLOCK_SIZE >> > (TNoBlocks, d_chunk, clearedChunkSize, d_tree, d_treeLength);
+	AddPrecleanedChunkToGraph<merLength> << <TNoBlocks, BLOCK_SIZE >> > (TNoBlocks, d_chunk, clearedChunkSize, d_tree, d_treeLength);
 	kernelErrchk();
-	DeleteWeakLeaves<MER_LENGHT> << <TNoBlocks, BLOCK_SIZE >> > (TNoBlocks, d_tree);
+	DeleteWeakLeaves<merLength> << <TNoBlocks, BLOCK_SIZE >> > (TNoBlocks, d_tree);
 	kernelErrchk();
 	int finalTreeLength = 0;
 	gpuErrchk(cudaMemcpy(&finalTreeLength, d_treeLength, sizeof(int), cudaMemcpyDeviceToHost));
 	int* finalTree = (int*)malloc(sizeof(int)*finalTreeLength);
 	gpuErrchk(cudaMemcpy(finalTree, d_tree, finalTreeLength * sizeof(int), cudaMemcpyDeviceToHost));
-	//DisplaySizeInfo(finalTreeLength, MER_LENGHT);
+	DisplaySizeInfo(finalTreeLength, merLength);
 	//DisplayTree(finalTree);
 	//DisplayTable(finalTree, finalTreeLength);
 	gpuErrchk(cudaFree(d_chunk));

@@ -80,7 +80,7 @@ void Correct(std::fstream& input_file, std::fstream& output_file, std::vector<in
 	{
 		//std::cout << ".";
 		CorrectRead(read, DBG, k);
-		output_file << read;
+		output_file << read << "\n";
 	}
 }
 
