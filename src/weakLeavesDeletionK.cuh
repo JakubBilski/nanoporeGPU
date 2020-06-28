@@ -35,10 +35,10 @@ void DeleteWeakLeaves(int noBlocks, int* tree)
 			//tutaj juz node = leaf
 			if (tree[node] + tree[node + 1] + tree[node + 2] + tree[node + 3] < WEAK_TRESHOLD)
 			{
-				tree[node] = -1;
-				tree[node + 1] = -1;
-				tree[node + 2] = -1;
-				tree[node + 3] = -1;
+				tree[node] = 0;
+				tree[node + 1] = 0;
+				tree[node + 2] = 0;
+				tree[node + 3] = 0;
 			}
 			else
 			{
