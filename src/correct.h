@@ -24,6 +24,10 @@ void CorrectRead(std::string& read, std::vector<int>& DBG, int k)
 			break;
 		}
 	}
+	if (i > 0)
+	{
+		std::cout << "Correct head" << std::endl;
+	}
 	if (!check_head)
 	{
 		std::cout << "Read discarded - no solid regions";
@@ -37,8 +41,16 @@ void CorrectRead(std::string& read, std::vector<int>& DBG, int k)
 		if (get_kmer_id(end_kmer, DBG))
 		{
 			if (i > weak_region + 1)
-				CorrectInner(begin_kmer, end_kmer, read.substr(weak_region+k, i - weak_region -k),
+			{
+				int weak_len = i - weak_region - k;
+				std::string corrected_weak = CorrectInner(begin_kmer, end_kmer, 
+					read.substr(weak_region + k, weak_len),
 					100, DBG);
+				read = read.substr(0, weak_region + k) + corrected_weak + read.substr(i);
+				i = i + corrected_weak.size() - weak_len;
+				read_len = read_len + corrected_weak.size() - weak_len;
+			}
+				
 			weak_region = i;
 			begin_kmer = end_kmer;
 		}
@@ -51,18 +63,30 @@ void Correct(std::fstream& input_file, std::fstream& output_file, std::vector<in
 	std::string read;
 	while (input_file >> read)
 	{
+		//std::cout << ".";
 		CorrectRead(read, DBG, k);
 		output_file << read;
 	}
 }
 
 
-void TestCorrect()
+void TestEditDist()
 {
 	std::string s1 = "ACTAAAGE";
 	std::string s2 = "ACACAGE";
-	std::cout << EditDistance(s1, s2) << std::endl;
-	/*std::vector<int> DBG;
+	std::cout << EditDistance(s1, s2) << ", expected 2" << std::endl;
+
+	s1 = "BANANANA";
+	s2 = "B";
+	std::cout << EditDistanceCheckPrefix(s1, s2, 1) << ", expected 1" << std::endl;
+}
+
+
+void TestCorrect()
+{
+	std::cout << "TEST EDIT DIST" << std::endl;
+	TestEditDist();
+	std::vector<int> DBG;
 	for (int i = 0; i < 4; i++)
 		DBG.push_back(0);
 
@@ -94,5 +118,6 @@ void TestCorrect()
 	std::cout << std::endl << std::endl << "Check:" << std::endl;
 
 	std::string read = "AATCATGGTAACTA";
-	CorrectRead(read, DBG, k);*/
+	CorrectRead(read, DBG, k);
 }
+

@@ -46,11 +46,12 @@ int EditDistance(std::string s1, std::string s2)
             v0[j] = v1[j];
     }
     // after the last swap, the results of v1 are now in v0
+    int result = v0[n];
 
     delete[] v0;
     delete[] v1;
 
-    return v0[n];
+    return result;
 }
 
 int EditDistanceCheckPrefix(std::string s1, std::string s2, int max_dst)
@@ -103,9 +104,9 @@ int EditDistanceCheckPrefix(std::string s1, std::string s2, int max_dst)
             return true;
         }
     }
+    int result = v0[n];
 
     delete[] v0;
     delete[] v1;
-
-    return false;
+    return result<=max_dst;
 }

@@ -17,7 +17,7 @@
 #include "defines.h"
 #include "Correct.h"
 
-template <int TNoBlocks> int* precleanedJumpGPU(std::fstream& fs, std::fstream& ts);
+template <int TNoBlocks> int* precleanedJumpGPU(std::fstream& fs, std::fstream& ts, int& size);
 
 int main(int argc, char* argv[])
 {
@@ -53,7 +53,8 @@ int main(int argc, char* argv[])
 		assertOpenFile(ts, tempFilePath);
 		clock_t start = clock();
 
-		int* DBG = precleanedJumpGPU<10>(fs, ts);
+		int DBG_size = 0;
+		int* DBG = precleanedJumpGPU<10>(fs, ts, DBG_size);
 		printf("%25s = %11f\n", "precleanedJumpGPU<10>", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
 		fs.close();
 		ts.close();
@@ -65,8 +66,9 @@ int main(int argc, char* argv[])
 		assertOpenFile(ts, tempFilePath2);
 		start = clock();
 
-		Correct(fs, ts, DBG);
-		printf("%25s = %11f\n", "precleanedJumpGPU<10>", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
+		std::vector<int> DBG_v(DBG, DBG + DBG_size);
+		Correct(fs, ts, DBG_v, MER_LENGHT);
+		printf("%25s = %11f\n", "Correct", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
 		fs.close();
 		ts.close();
 
@@ -77,7 +79,7 @@ int main(int argc, char* argv[])
 }
 
 template <int TNoBlocks>
-int* precleanedJumpGPU(std::fstream& fs, std::fstream& ts)
+int* precleanedJumpGPU(std::fstream& fs, std::fstream& ts, int& size)
 {
 	char* d_chunk;
 	int* d_tree;
@@ -178,12 +180,13 @@ int* precleanedJumpGPU(std::fstream& fs, std::fstream& ts)
 	int* finalTree = (int*)malloc(sizeof(int)*finalTreeLength);
 	gpuErrchk(cudaMemcpy(finalTree, d_tree, finalTreeLength * sizeof(int), cudaMemcpyDeviceToHost));
 	//DisplaySizeInfo(finalTreeLength, MER_LENGHT);
-	DisplayTree(finalTree);
+	//DisplayTree(finalTree);
 	//DisplayTable(finalTree, finalTreeLength);
 	gpuErrchk(cudaFree(d_chunk));
 	gpuErrchk(cudaFree(d_tree));
 	gpuErrchk(cudaFree(d_treeLength));
 	free(chunk);
 	free(clearedChunk);
+	size = finalTreeLength;
 	return finalTree;
 }
