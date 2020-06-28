@@ -4,7 +4,7 @@
 
 template <int TMerLength>
 __global__
-void DeleteWeakLeaves(int noBlocks, int* tree)
+void DeleteWeakLeaves(int noBlocks, int* tree, int* noDeleted_debug)
 {
 	//liczba lisci = 4^TMerLength
 
@@ -35,6 +35,7 @@ void DeleteWeakLeaves(int noBlocks, int* tree)
 			//tutaj juz node = leaf
 			if (tree[node] + tree[node + 1] + tree[node + 2] + tree[node + 3] < WEAK_TRESHOLD)
 			{
+				atomicAdd(noDeleted_debug, 1);
 				tree[node] = 0;
 				tree[node + 1] = 0;
 				tree[node + 2] = 0;

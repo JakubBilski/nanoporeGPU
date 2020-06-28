@@ -205,12 +205,20 @@ int* precleanedToGraph(std::fstream& fs, int& out_treeLength)
 			lastNewline = i;
 		}
 	}
-	DeleteWeakLeaves<merLength> << <TNoBlocks, BLOCK_SIZE >> > (TNoBlocks, d_tree);
+	int* d_noDeletedDebug;
+	gpuErrchk(cudaMalloc(&d_noDeletedDebug, sizeof(int)));
+	gpuErrchk(cudaMemset(d_noDeletedDebug, 0, sizeof(int)));
+	DeleteWeakLeaves<merLength> << <TNoBlocks, BLOCK_SIZE >> > (TNoBlocks, d_tree, d_noDeletedDebug);
 	kernelErrchk();
+
 	int finalTreeLength = 0;
 	gpuErrchk(cudaMemcpy(&finalTreeLength, d_treeLength, sizeof(int), cudaMemcpyDeviceToHost));
 	int* finalTree = (int*)malloc(sizeof(int)*finalTreeLength);
 	gpuErrchk(cudaMemcpy(finalTree, d_tree, finalTreeLength * sizeof(int), cudaMemcpyDeviceToHost));
+	int noDeletedDebug = 0;
+	gpuErrchk(cudaMemcpy(&noDeletedDebug, d_noDeletedDebug, sizeof(int), cudaMemcpyDeviceToHost));
+	printf("Deleted %d weak %d-mers\n", noDeletedDebug, merLength);
+
 	DisplaySizeInfo(finalTreeLength, merLength);
 	gpuErrchk(cudaFree(d_chunk));
 	gpuErrchk(cudaFree(d_tree));
@@ -315,12 +323,19 @@ int* fastqToGraphAndPrecleaned(std::fstream& fs, std::fstream& ts, int& out_tree
 	gpuErrchk(cudaMemcpy(d_chunk, clearedChunk, clearedChunkSize * sizeof(char), cudaMemcpyHostToDevice));
 	AddPrecleanedChunkToGraph<merLength> << <TNoBlocks, BLOCK_SIZE >> > (TNoBlocks, d_chunk, clearedChunkSize, d_tree, d_treeLength);
 	kernelErrchk();
-	DeleteWeakLeaves<merLength> << <TNoBlocks, BLOCK_SIZE >> > (TNoBlocks, d_tree);
+	int* d_noDeletedDebug;
+	gpuErrchk(cudaMalloc(&d_noDeletedDebug, sizeof(int)));
+	gpuErrchk(cudaMemset(d_noDeletedDebug, 0, sizeof(int)));
+	DeleteWeakLeaves<merLength> << <TNoBlocks, BLOCK_SIZE >> > (TNoBlocks, d_tree, d_noDeletedDebug);
 	kernelErrchk();
 	int finalTreeLength = 0;
 	gpuErrchk(cudaMemcpy(&finalTreeLength, d_treeLength, sizeof(int), cudaMemcpyDeviceToHost));
 	int* finalTree = (int*)malloc(sizeof(int)*finalTreeLength);
 	gpuErrchk(cudaMemcpy(finalTree, d_tree, finalTreeLength * sizeof(int), cudaMemcpyDeviceToHost));
+	int noDeletedDebug = 0;
+	gpuErrchk(cudaMemcpy(&noDeletedDebug, d_noDeletedDebug, sizeof(int), cudaMemcpyDeviceToHost));
+	printf("Deleted %d weak %d-mers\n", noDeletedDebug, merLength);
+
 	DisplaySizeInfo(finalTreeLength, merLength);
 	//DisplayTree(finalTree);
 	//DisplayTable(finalTree, finalTreeLength);
