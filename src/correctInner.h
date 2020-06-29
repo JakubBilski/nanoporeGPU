@@ -40,8 +40,8 @@ public:
 		if (node == end_node)
 		{
 			int edit_distance = EditDistance(desired, substr);
-#ifdef DEBUG
 			std::cout << "end node, " << act_correction << std::endl;
+#ifdef DEBUG
 #endif
 			best_correction = act_correction;
 			best_edit_dist = edit_distance;

@@ -42,8 +42,9 @@ char reverse_char_id(int c)
 int get_kmer_id(std::string kmer, std::vector<int>& DBG)
 {
 	int node = 0;
-	for (char c : kmer)
+	for (int i=0;i<kmer.size();i++)
 	{
+		char c = kmer[i];
 		node = DBG[node + char_id(c)];
 		if (node == 0)
 			return 0;
