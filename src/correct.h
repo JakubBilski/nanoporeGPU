@@ -27,7 +27,9 @@ void CorrectRead(std::string& read, std::vector<int>& DBG, int k)
 	}
 	if (i > 0)
 	{
+#ifdef DEBUG
 		std::cout << "Correct head" << std::endl;
+#endif // DEBUG
 	}
 	if (!check_head)
 	{

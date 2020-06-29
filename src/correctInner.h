@@ -40,8 +40,8 @@ public:
 		if (node == end_node)
 		{
 			int edit_distance = EditDistance(desired, substr);
-			std::cout << "end node, " << act_correction << std::endl;
 #ifdef DEBUG
+			std::cout << "end node, " << act_correction << std::endl;
 #endif
 			best_correction = act_correction;
 			best_edit_dist = edit_distance;
@@ -86,8 +86,8 @@ std::string CorrectInner(std::string begin_kmer, std::string end_kmer, std::stri
 	int max_depth = 100 / weak_region.size();
 
 
-	std::cout << "Correct inner input: " << begin_kmer << ";" << weak_region << ";" << end_kmer << std::endl;
 #ifdef  DEBUG
+	std::cout << "Correct inner input: " << begin_kmer << ";" << weak_region << ";" << end_kmer << std::endl;
 	std::cout << "Max edit dist: " << max_edit_distance << std::endl;
 		//return "";
 #endif //  DEBUG
