@@ -41,16 +41,20 @@ void CorrectRead(std::string& read, std::vector<int>& DBG, int k)
 	{
 		if (inside_graph)
 		{
-			int next_kmer_id = DBG[act_kmer_id + char_id(read[i+k])];
+			/*if (!get_kmer_id(read.substr(i-1, k), DBG))
+				throw "AAAA";*/
+			int next_kmer_id = DBG[act_kmer_id + char_id(read[i+k-1])];
 			if (next_kmer_id)
 			{
+				/*if (!get_kmer_id(read.substr(i, k), DBG))
+					throw "AAAA";*/
 				act_kmer_id = next_kmer_id;
 			}
 			else
 			{
 				inside_graph = false;
 				begin_kmer = read.substr(i-1, k);
-				weak_region = i-1+k;
+				weak_region = i+k-1;  // begin of weak region is after end of last solid
 			}
 		}
 		else
@@ -58,13 +62,13 @@ void CorrectRead(std::string& read, std::vector<int>& DBG, int k)
 			std::string end_kmer = read.substr(i, k);
 			if (act_kmer_id = get_kmer_id(end_kmer, DBG))
 			{
-				int weak_len = i - weak_region;
+				int weak_len = i - weak_region;  // i - first letter of ending solid kmer
 				if (weak_len <= MAX_WEAK_CORRECTED_REGION && weak_len >= 1)
 				{
 					std::string corrected_weak = CorrectInner(begin_kmer, end_kmer,
 						read.substr(weak_region + k, weak_len),
 						100, DBG);
-					read = read.substr(0, weak_region + k) + corrected_weak + read.substr(i);
+					read = read.substr(0, weak_region) + corrected_weak + read.substr(i);
 					i = i + corrected_weak.size() - weak_len;
 					read_len = read_len + corrected_weak.size() - weak_len;
 				}
