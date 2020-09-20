@@ -23,6 +23,7 @@ int* precleanedToGraph(std::fstream& fs, int& out_treeLength);
 template <int TNoBlocks, int merLength>
 int* fastqToGraphAndPrecleaned(std::fstream& fs, std::fstream& ts, int& out_treeLength);
 
+void performRun(char* inputFilePath, char* resultFile1, char* resultFile2, char* resultFile3, char* resultFile4);
 
 int main(int argc, char* argv[])
 {
@@ -30,17 +31,16 @@ int main(int argc, char* argv[])
 	TestCorrect();
 	return 0;
 #else
-    if(argc != 2 && argc != 3)
+    if(argc != 6)
     {
-      printf("Usage: reader file_path temp_file_path\n");
+      printf("Usage: reader file_path result_file_1 result_file_2 result_file_3 result_file_4\n");
       return 0;
     }
-	char* tempFilePath = "./tempFile.txt";
-	if (argc == 3)
-	{
-		tempFilePath = argv[2];
-	}
 	char* inputFilePath = argv[1];
+	char* resultFile1 = argv[2];
+	char* resultFile2 = argv[3];
+	char* resultFile3 = argv[4];
+	char* resultFile4 = argv[5];
 	printf("Machine:\n\t%d MB process memory\n", (sizeof(char)*HOST_CHUNK_SIZE) / (1024 * 1024));
 	printf("\t%d MB device data memory\n", (sizeof(char)*DEVICE_CHUNK_SIZE) / (1024 * 1024));
 	printf("\t%d MB device tree memory\n", (sizeof(int)*DEVICE_TREE_SIZE) / (1024 * 1024));
@@ -49,93 +49,84 @@ int main(int argc, char* argv[])
 	const int noTests = 1;
 	for (size_t test = 0; test < noTests; test++)
 	{
-		printf(inputFilePath);
-		printf("Run %d\n", (int)test);
-
-		std::fstream fs(inputFilePath, std::ios::in | std::ios::binary);
-		assertOpenFile(fs, inputFilePath);
-		std::fstream ts(tempFilePath, std::ios::in | std::ios::out | std::ios::binary | std::ofstream::trunc);
-		assertOpenFile(ts, tempFilePath);
-		clock_t start = clock();
-
-		int DBG_size = 0;
-		int* DBG = fastqToGraphAndPrecleaned<10, MER_LENGTH_1>(fs, ts, DBG_size);
-		printf("%25s = %11f\n", "fastqToGraphAndPrecleaned<10>", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
-		fs.close();
-		ts.close();
-
-		char* tempFilePath2 = "result_file_aa.txt";
-		fs.open(tempFilePath, std::ios::in | std::ios::binary);
-		assertOpenFile(fs, tempFilePath);
-		ts.open(tempFilePath2, std::ios::in | std::ios::out | std::ios::binary | std::ofstream::trunc);
-		assertOpenFile(ts, tempFilePath2);
-		start = clock();
-
-		std::vector<int> DBG_v(DBG, DBG + DBG_size);
-		Correct(fs, ts, DBG_v, MER_LENGTH_1);
-		printf("%25s = %11f\n", "Correct", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
-		fs.close();
-		ts.close();
-
-		//start of the reusable block
-
-		free(DBG);
-
-		fs.open(tempFilePath2, std::ios::in | std::ios::binary);
-		assertOpenFile(fs, tempFilePath);
-		start = clock();
-
-		DBG = precleanedToGraph<10, MER_LENGTH_2>(fs, DBG_size);
-		printf("%25s = %11f\n", "precleanedToGraph<10>", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
-		fs.close();
-
-		char* tempFilePath3 = "result_file_aa2.txt";
-		fs.open(tempFilePath2, std::ios::in | std::ios::binary);
-		assertOpenFile(fs, tempFilePath);
-		ts.open(tempFilePath3, std::ios::in | std::ios::out | std::ios::binary | std::ofstream::trunc);
-		assertOpenFile(ts, tempFilePath2);
-		start = clock();
-
-		DBG_v = std::vector<int>(DBG, DBG + DBG_size);
-		Correct(fs, ts, DBG_v, MER_LENGTH_2);
-		printf("%25s = %11f\n", "Correct", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
-		fs.close();
-		ts.close();
-
-		//end of the reusable block
-				
-		//start of the reusable block
-
-		free(DBG);
-
-		fs.open(tempFilePath3, std::ios::in | std::ios::binary);
-		assertOpenFile(fs, tempFilePath);
-		start = clock();
-
-		DBG = precleanedToGraph<10, MER_LENGTH_3>(fs, DBG_size);
-		printf("%25s = %11f\n", "precleanedToGraph<10>", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
-		fs.close();
-
-		char* tempFilePath4 = "result_file_aa3.txt";
-		fs.open(tempFilePath3, std::ios::in | std::ios::binary);
-		assertOpenFile(fs, tempFilePath);
-		ts.open(tempFilePath4, std::ios::in | std::ios::out | std::ios::binary | std::ofstream::trunc);
-		assertOpenFile(ts, tempFilePath2);
-		start = clock();
-
-		DBG_v = std::vector<int>(DBG, DBG + DBG_size);
-		Correct(fs, ts, DBG_v, MER_LENGTH_3);
-		printf("%25s = %11f\n", "Correct", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
-		fs.close();
-		ts.close();
-
-		//end of the reusable block
-
-
-		printf("\n");
+		printf("\n\nRun %d\n", (int)test);
+		performRun(inputFilePath, resultFile1, resultFile2, resultFile3, resultFile4);
 	}
 	return 0;
 #endif
+}
+
+void performRun(char* inputFilePath, char* resultFile1, char* resultFile2, char* resultFile3, char* resultFile4)
+{
+	std::fstream fs(inputFilePath, std::ios::in | std::ios::binary);
+	assertOpenFile(fs, inputFilePath);
+	std::fstream ts(resultFile1, std::ios::in | std::ios::out | std::ios::binary | std::ofstream::trunc);
+	assertOpenFile(ts, resultFile1);
+	clock_t start = clock();
+
+	int DBG_size = 0;
+	int* DBG = fastqToGraphAndPrecleaned<NO_BLOCKS, MER_LENGTH_1>(fs, ts, DBG_size);
+	printf("%25s = %11f\n", "fastqToGraphAndPrecleaned", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
+	fs.close();
+	ts.close();
+
+	fs.open(resultFile1, std::ios::in | std::ios::binary);
+	assertOpenFile(fs, resultFile1);
+	ts.open(resultFile2, std::ios::in | std::ios::out | std::ios::binary | std::ofstream::trunc);
+	assertOpenFile(ts, resultFile2);
+	start = clock();
+
+	std::vector<int> DBG_v(DBG, DBG + DBG_size);
+	Correct(fs, ts, DBG_v, MER_LENGTH_1);
+	printf("%25s = %11f\n", "Correct", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
+	fs.close();
+	ts.close();
+
+	free(DBG);
+
+	fs.open(resultFile2, std::ios::in | std::ios::binary);
+	assertOpenFile(fs, resultFile2);
+	start = clock();
+
+	DBG = precleanedToGraph<NO_BLOCKS, MER_LENGTH_2>(fs, DBG_size);
+	printf("%25s = %11f\n", "precleanedToGraph", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
+	fs.close();
+
+	fs.open(resultFile2, std::ios::in | std::ios::binary);
+	assertOpenFile(fs, resultFile2);
+	ts.open(resultFile3, std::ios::in | std::ios::out | std::ios::binary | std::ofstream::trunc);
+	assertOpenFile(ts, resultFile3);
+	start = clock();
+
+	DBG_v = std::vector<int>(DBG, DBG + DBG_size);
+	Correct(fs, ts, DBG_v, MER_LENGTH_2);
+	printf("%25s = %11f\n", "Correct", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
+	fs.close();
+	ts.close();
+
+	free(DBG);
+
+	fs.open(resultFile3, std::ios::in | std::ios::binary);
+	assertOpenFile(fs, resultFile3);
+	start = clock();
+
+	DBG = precleanedToGraph<NO_BLOCKS, MER_LENGTH_3>(fs, DBG_size);
+	printf("%25s = %11f\n", "precleanedToGraph", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
+	fs.close();
+
+	fs.open(resultFile3, std::ios::in | std::ios::binary);
+	assertOpenFile(fs, resultFile3);
+	ts.open(resultFile4, std::ios::in | std::ios::out | std::ios::binary | std::ofstream::trunc);
+	assertOpenFile(ts, resultFile4);
+	start = clock();
+
+	DBG_v = std::vector<int>(DBG, DBG + DBG_size);
+	Correct(fs, ts, DBG_v, MER_LENGTH_3);
+	printf("%25s = %11f\n", "Correct", 0.001f * (clock() - start) * 1000 / CLOCKS_PER_SEC);
+	fs.close();
+	ts.close();
+
+	printf("\n");
 }
 
 template <int TNoBlocks, int merLength>

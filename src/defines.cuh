@@ -1,7 +1,8 @@
+#define NO_BLOCKS 10
 #define BLOCK_SIZE 256
-#define MER_LENGTH_1 10
-#define MER_LENGTH_2 10
-#define MER_LENGTH_3 10
+#define MER_LENGTH_1 5
+#define MER_LENGTH_2 6
+#define MER_LENGTH_3 7
 #define WEAK_TRESHOLD 200
 #define HOST_CHUNK_SIZE (1024*1024*1024)
 #define DEVICE_CHUNK_SIZE (1024*1024*4)
