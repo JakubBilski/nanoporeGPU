@@ -48,7 +48,7 @@ void DeleteWeakLeaves(int noBlocks, int* tree, int* noDeleted_debug)
 				nie istnieje
 				*/
 				/*
-				usuwamy wszystkie wskaüniki z tego noda (na wszelki wypadek
+				zerujemy wszystkie wskaüniki z tego noda
 				*/
 				tree[node] = 0;
 				tree[node + 1] = 0;
@@ -64,40 +64,36 @@ void DeleteWeakLeaves(int noBlocks, int* tree, int* noDeleted_debug)
 				int upNode = NodeFromThid(tree, thid, TMerLength - 1);
 				if(upNode>0)
 					tree[upNode + last_char] = 0;
-				/*
-				usuwamy wskaüniki z 
-				AACCAGA
-				CACCAGA
-				GACCAGA
-				TACCAGA
-				*/
+			}
+		}
+		thid += BLOCK_SIZE * noBlocks;	//go to the next leaf
+	}
+}
+
+template <int TMerLength>
+__global__
+void ChangeEdgeCountersToPointers(int noBlocks, int* tree)
+{
+	//liczba lisci = 4^TMerLength
+
+	unsigned int thid = threadIdx.x + blockIdx.x * BLOCK_SIZE;
+	//dopoki sa jeszcze jakies liscie
+	//potrzebne przejscie int -> ACCAGAT
+	int noKMers = 1 << (2 * TMerLength);
+	while (thid < noKMers)
+	{
+		int node = NodeFromThid(tree, thid, TMerLength);
+
+		if (node != 0)
+		{
+			//jesli node istnieje, znajdz jego nastepniki
+			int searchingNode = NodeFromThid(tree, thid >> 2, TMerLength - 1);
+			if (searchingNode > 0)
+			{
 				for (int i = 0; i < 4; i++)
 				{
-					int searchingNode = NodeFromThid(tree, (thid << 2)|i, TMerLength);
-					if(searchingNode>0)
-						tree[searchingNode + last_char] = 0;
-				}
-			}
-			else
-			{
-				/*
-				node ACCAGAT
-				uzupe≥niamy wskaüniki z tego do
-				CCAGATA
-				CCAGATC
-				CCAGATG
-				CCAGATT
-				
-				Czyli znajdujemy node CCAGAT i przepisujemy wszystkie 4 wskaüniki.
-				*/
-				int searchingNode = NodeFromThid(tree, thid>>2, TMerLength-1);
-				if (searchingNode>0)
-				{
-					for (int i = 0; i < 4; i++)
-					{
-
-						tree[node + i] = tree[searchingNode + i];
-					}
+					//wspazniki do nastepnikow zapisz w czterech komorkach node'a
+					tree[node + i] = tree[searchingNode + i];
 				}
 			}
 		}

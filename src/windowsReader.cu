@@ -201,6 +201,8 @@ int* precleanedToGraph(std::fstream& fs, int& out_treeLength)
 	gpuErrchk(cudaMemset(d_noDeletedDebug, 0, sizeof(int)));
 	DeleteWeakLeaves<merLength> << <TNoBlocks, BLOCK_SIZE >> > (TNoBlocks, d_tree, d_noDeletedDebug);
 	kernelErrchk();
+	ChangeEdgeCountersToPointers<merLength> << <TNoBlocks, BLOCK_SIZE >> > (TNoBlocks, d_tree);
+	kernelErrchk();
 
 	int finalTreeLength = 0;
 	gpuErrchk(cudaMemcpy(&finalTreeLength, d_treeLength, sizeof(int), cudaMemcpyDeviceToHost));
@@ -319,6 +321,9 @@ int* fastqToGraphAndPrecleaned(std::fstream& fs, std::fstream& ts, int& out_tree
 	gpuErrchk(cudaMemset(d_noDeletedDebug, 0, sizeof(int)));
 	DeleteWeakLeaves<merLength> << <TNoBlocks, BLOCK_SIZE >> > (TNoBlocks, d_tree, d_noDeletedDebug);
 	kernelErrchk();
+	ChangeEdgeCountersToPointers<merLength> << <TNoBlocks, BLOCK_SIZE >> > (TNoBlocks, d_tree);
+	kernelErrchk();
+
 	int finalTreeLength = 0;
 	gpuErrchk(cudaMemcpy(&finalTreeLength, d_treeLength, sizeof(int), cudaMemcpyDeviceToHost));
 	int* finalTree = (int*)malloc(sizeof(int)*finalTreeLength);
